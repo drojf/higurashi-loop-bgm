@@ -15,52 +15,84 @@ def sha256sum(filename):
     with open(filename, 'rb', buffering=0) as f:
         return hashlib.file_digest(f, 'sha256').hexdigest()
 
-def caculate_sha256_of_files_in_folder():
-    if not os.path.exists(scan_folder):
-        print(f"ERROR: input folder '{scan_folder}' missing!")
+def caculate_sha256_of_files_in_folder(folder, relative_folder):
+    if not os.path.exists(folder):
+        print(f"ERROR: input folder '{folder}' missing!")
         exit(-1)
     
 
     shas = []
 
     # iterate through all original hou sprites and calculate their SHA256
-    for path in pathlib.Path(scan_folder).rglob('*.*'):
+    for path in pathlib.Path(folder).rglob('*.ogg'):
         sha256 = sha256sum(path)
-        relpath = path.relative_to(scan_folder)
+        relpath = path.relative_to(relative_folder)
 
-        # print(f'{path} -> {sha256}')
+        print(f'{relpath} -> {sha256}')
 
         shas.append((relpath, sha256))
 
     return shas
 
 
-mapping = caculate_sha256_of_files_in_folder()
+# Record all paths in 'input' folder
+path_checklist = {}
+for path in pathlib.Path(scan_folder).rglob('*.ogg'):
+    relpath = path.relative_to(scan_folder)
+    path_checklist[relpath] = None
+num_ogg = len(path_checklist)
 
-with open(out_csv_path, 'w', newline='') as csvfile:
-    writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting = csv.QUOTE_ALL)
-    for path, sha256 in mapping:
-        writer.writerow([path, sha256])
+# Scan folders in the order specified below
+folders_to_scan = [
+    'question/BGM',
+    'question/OGBGM',
+    'question/HouPlusBGM',
+    'question/HouPlusDemoBGM',
+    'question/RemakeBGM',
+]
+
+for folder in folders_to_scan:
+    sha_path_tuples = caculate_sha256_of_files_in_folder(Path(scan_folder).joinpath(folder), scan_folder)
+    for (path, sha) in sha_path_tuples:
+        print(path)
+        path_checklist.pop(path)
+
+# Check all paths were covered
+num_not_covered = len(path_checklist)
+if num_not_covered > 0:
+    print(f"Error: {num_not_covered} paths not covered:")
+    for (path, _) in path_checklist.items():
+        print(f' - NOT COVERED: {path}')
+    raise Exception(f"Error: {num_not_covered} paths not covered:")
+else:
+    print(f"OK - all {num_ogg} files covered")
 
 
-unique_mapping = {}
 
-dup_count = 0
+# with open(out_csv_path, 'w', newline='') as csvfile:
+#     writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting = csv.QUOTE_ALL)
+#     for path, sha256 in mapping:
+#         writer.writerow([path, sha256])
 
-for path, sha256 in mapping:
-    if sha256 in unique_mapping:
-        dup_count += 1
-        if path not in unique_mapping[sha256]:
-            unique_mapping[sha256][path] = None
-    else:
-        unique_mapping[sha256] = {path: {None}}
 
-print(f"Found {dup_count} duplicates")
+# unique_mapping = {}
 
-for key, value in unique_mapping.items():
-    source = os.path.join(scan_folder, list(value)[0])
-    dest = os.path.join(output_dir, list(value)[0])
+# dup_count = 0
 
-    # print(f"{source} -> {dest}")
-    Path(dest).parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(source, dest)
+# for path, sha256 in mapping:
+#     if sha256 in unique_mapping:
+#         dup_count += 1
+#         if path not in unique_mapping[sha256]:
+#             unique_mapping[sha256][path] = None
+#     else:
+#         unique_mapping[sha256] = {path: {None}}
+
+# print(f"Found {dup_count} duplicates")
+
+# for key, value in unique_mapping.items():
+#     source = os.path.join(scan_folder, list(value)[0])
+#     dest = os.path.join(output_dir, list(value)[0])
+
+#     # print(f"{source} -> {dest}")
+#     Path(dest).parent.mkdir(parents=True, exist_ok=True)
+#     shutil.copy(source, dest)
