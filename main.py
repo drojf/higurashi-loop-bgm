@@ -56,6 +56,7 @@ num_ogg = len(path_checklist)
 database = DuplicateDatabase()
 
 folders_to_scan = [
+    # Roughly 231 unique in question-answer
     'question/BGM',
     'question/April2019BGM',
     'question/OGBGM',
@@ -65,9 +66,12 @@ folders_to_scan = [
     'answer/BGM',
     'answer/ExtraBGM',
     'answer/OGBGM',
+    # No unique in rei which isn't already in question/answer
     'rei/BGM',
     'rei/ExtraBGM',
     'rei/OGBGM',
+    # Many hou BGM are not bit for bit identical, but are probably are actually identical?
+    # This inflates the unique count from 231 -> 557
     'hou-plus/BGM',
     'hou-plus/April2019BGM',
     'hou-plus/OGBGM',
@@ -86,10 +90,15 @@ if num_not_covered > 0:
     print(f"Error: {num_not_covered} paths not covered:")
     for (path, _) in path_checklist.items():
         print(f' - NOT COVERED: {path}')
-    raise Exception(f"Error: {num_not_covered} paths not covered:")
+    raise Exception(f"Error: {num_not_covered} paths not covered: ({len(database.db)} unique)")
 else:
-    print(f"OK - all {num_ogg} files covered")
+    print(f"OK - all {num_ogg} files covered ({len(database.db)} unique)")
 
+# Save the duplicate database as a python .pickle file
+with open(os.path.join(output_dir, 'database.pickle'), 'wb') as f:
+    pickle.dump(database.db, f)
+
+# Copy only unique files, and information about each file
 for (sha, paths) in database.db.items():
     for i, path in enumerate(paths):
         src = Path(scan_folder).joinpath(path)
