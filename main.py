@@ -65,6 +65,13 @@ folders_to_scan = [
     'answer/BGM',
     'answer/ExtraBGM',
     'answer/OGBGM',
+    'rei/BGM',
+    'rei/ExtraBGM',
+    'rei/OGBGM',
+    'hou-plus/BGM',
+    'hou-plus/April2019BGM',
+    'hou-plus/OGBGM',
+    'hou-plus/HouPlusDemoBGM',
 ]
 
 for folder in folders_to_scan:
