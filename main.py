@@ -57,10 +57,14 @@ database = DuplicateDatabase()
 
 folders_to_scan = [
     'question/BGM',
+    'question/April2019BGM',
     'question/OGBGM',
     'question/HouPlusBGM',
     'question/HouPlusDemoBGM',
     'question/RemakeBGM',
+    'answer/BGM',
+    'answer/ExtraBGM',
+    'answer/OGBGM',
 ]
 
 for folder in folders_to_scan:
@@ -89,9 +93,18 @@ for (sha, paths) in database.db.items():
         if i == 0:
             print(f'Copying from {src} -> {dst}')
             shutil.copy(src, dst)
+
+            txt_dst = dst.with_stem(f'{dst.stem}_info').with_suffix('.txt')
+            with open(txt_dst, 'w', encoding='utf-8') as f:
+                f.write(f"This is the 'original'.\n")
+                f.write(f"All Duplicates\n")
+                for path in paths:
+                    f.write(f' - {path}\n')
+
         else:
             print(f'Creating txt file at {dst}')
-            with open(dst.with_suffix('.txt'), 'w', encoding='utf-8') as f:
+            txt_dst = dst.with_stem(f'{dst.stem}_dup').with_suffix('.txt')
+            with open(txt_dst, 'w', encoding='utf-8') as f:
                 f.write(f"Duplicate of [{paths[0]}]\n")
                 f.write(f"All Duplicates\n")
                 for path in paths:
