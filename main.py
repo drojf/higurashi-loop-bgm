@@ -67,7 +67,7 @@ for folder in folders_to_scan:
     sha_path_tuples = caculate_sha256_of_files_in_folder(Path(scan_folder).joinpath(folder), scan_folder)
     for (path, sha) in sha_path_tuples:
         path_checklist.pop(path)
-        database.add(str(path), sha)
+        database.add(path, sha)
 
 # Check all paths were covered
 num_not_covered = len(path_checklist)
@@ -79,8 +79,27 @@ if num_not_covered > 0:
 else:
     print(f"OK - all {num_ogg} files covered")
 
-for (sha, path) in database.db.items():
-    print(f'{sha} -> {path}')
+for (sha, paths) in database.db.items():
+    for i, path in enumerate(paths):
+        src = Path(scan_folder).joinpath(path)
+        dst = Path(output_dir).joinpath(path)
+        os.makedirs(dst.parent, exist_ok=True)
+
+        # First path is the "original", need to copy
+        if i == 0:
+            print(f'Copying from {src} -> {dst}')
+            shutil.copy(src, dst)
+        else:
+            print(f'Creating txt file at {dst}')
+            with open(dst.with_suffix('.txt'), 'w', encoding='utf-8') as f:
+                f.write(f"Duplicate of [{paths[0]}]\n")
+                f.write(f"All Duplicates\n")
+                for path in paths:
+                    f.write(f' - {path}\n')
+
+
+
+
 
 
 # with open(out_csv_path, 'w', newline='') as csvfile:
