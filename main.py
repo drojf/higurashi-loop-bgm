@@ -7,6 +7,16 @@ import shutil
 import re
 import csv
 
+class DuplicateDatabase:
+    def __init__(self) -> None:
+        self.db = {} #type: dict[str, list[str]]
+
+    def add(self, path, sha256):
+        if sha256 not in self.db:
+            self.db[sha256] = []
+
+        self.db[sha256].append(path)
+
 scan_folder = 'input'
 output_dir = 'output'
 out_csv_path = 'bgm-to-sha.csv'
@@ -43,6 +53,8 @@ for path in pathlib.Path(scan_folder).rglob('*.ogg'):
 num_ogg = len(path_checklist)
 
 # Scan folders in the order specified below
+database = DuplicateDatabase()
+
 folders_to_scan = [
     'question/BGM',
     'question/OGBGM',
@@ -54,8 +66,8 @@ folders_to_scan = [
 for folder in folders_to_scan:
     sha_path_tuples = caculate_sha256_of_files_in_folder(Path(scan_folder).joinpath(folder), scan_folder)
     for (path, sha) in sha_path_tuples:
-        print(path)
         path_checklist.pop(path)
+        database.add(str(path), sha)
 
 # Check all paths were covered
 num_not_covered = len(path_checklist)
@@ -67,6 +79,8 @@ if num_not_covered > 0:
 else:
     print(f"OK - all {num_ogg} files covered")
 
+for (sha, path) in database.db.items():
+    print(f'{sha} -> {path}')
 
 
 # with open(out_csv_path, 'w', newline='') as csvfile:
